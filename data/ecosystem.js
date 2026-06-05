@@ -6,6 +6,7 @@
  *
  * Schema per entry:
  *   name          display name
+ *   org           parent company or owner
  *   category      frontier | search | coding | image | video | audio | agents | infra | open
  *   region        us | china | europe        (primary base / origin)
  *   access        closed | open | mixed       (model/product availability)
@@ -18,6 +19,7 @@ window.ECOSYSTEM = [
   // ── frontier ──────────────────────────────────────────────────────────────
   {
     name: "Anthropic",
+    org: "Anthropic",
     category: "frontier",
     region: "us",
     access: "closed",
@@ -28,6 +30,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "OpenAI",
+    org: "OpenAI",
     category: "frontier",
     region: "us",
     access: "mixed",
@@ -38,6 +41,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Google DeepMind",
+    org: "Google",
     category: "frontier",
     region: "us",
     access: "mixed",
@@ -48,6 +52,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "xAI",
+    org: "xAI",
     category: "frontier",
     region: "us",
     access: "mixed",
@@ -58,6 +63,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Meta AI",
+    org: "Meta",
     category: "frontier",
     region: "us",
     access: "open",
@@ -68,6 +74,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "DeepSeek",
+    org: "DeepSeek",
     category: "frontier",
     region: "china",
     access: "open",
@@ -78,6 +85,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Mistral AI",
+    org: "Mistral",
     category: "frontier",
     region: "europe",
     access: "mixed",
@@ -90,6 +98,7 @@ window.ECOSYSTEM = [
   // ── search ────────────────────────────────────────────────────────────────
   {
     name: "Perplexity",
+    org: "Perplexity",
     category: "search",
     region: "us",
     access: "closed",
@@ -100,6 +109,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Comet",
+    org: "Perplexity",
     category: "search",
     region: "us",
     access: "closed",
@@ -110,6 +120,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "ChatGPT Atlas",
+    org: "OpenAI",
     category: "search",
     region: "us",
     access: "closed",
@@ -120,6 +131,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Google AI Mode",
+    org: "Google",
     category: "search",
     region: "us",
     access: "closed",
@@ -130,6 +142,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Microsoft Copilot",
+    org: "Microsoft",
     category: "search",
     region: "us",
     access: "closed",
@@ -140,6 +153,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "You.com",
+    org: "You.com",
     category: "search",
     region: "us",
     access: "closed",
@@ -152,6 +166,7 @@ window.ECOSYSTEM = [
   // ── coding ────────────────────────────────────────────────────────────────
   {
     name: "Claude Code",
+    org: "Anthropic",
     category: "coding",
     region: "us",
     access: "closed",
@@ -162,6 +177,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "OpenAI Codex",
+    org: "OpenAI",
     category: "coding",
     region: "us",
     access: "mixed",
@@ -172,6 +188,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Cursor",
+    org: "Anysphere",
     category: "coding",
     region: "us",
     access: "closed",
@@ -182,6 +199,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "GitHub Copilot",
+    org: "Microsoft",
     category: "coding",
     region: "us",
     access: "closed",
@@ -192,6 +210,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Devin (Cognition)",
+    org: "Cognition",
     category: "coding",
     region: "us",
     access: "closed",
@@ -202,6 +221,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Windsurf",
+    org: "Cognition",
     category: "coding",
     region: "us",
     access: "closed",
@@ -212,6 +232,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Replit Agent",
+    org: "Replit",
     category: "coding",
     region: "us",
     access: "closed",
@@ -222,6 +243,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Grok Build",
+    org: "xAI",
     category: "coding",
     region: "us",
     access: "closed",
@@ -232,6 +254,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Devstral",
+    org: "Mistral",
     category: "coding",
     region: "europe",
     access: "open",
@@ -244,6 +267,7 @@ window.ECOSYSTEM = [
   // ── image ─────────────────────────────────────────────────────────────────
   {
     name: "Midjourney",
+    org: "Midjourney",
     category: "image",
     region: "us",
     access: "closed",
@@ -254,6 +278,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "FLUX (Black Forest Labs)",
+    org: "Black Forest Labs",
     category: "image",
     region: "europe",
     access: "mixed",
@@ -264,6 +289,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Imagen/Nano Banana",
+    org: "Google",
     category: "image",
     region: "us",
     access: "closed",
@@ -274,6 +300,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "GPT Image",
+    org: "OpenAI",
     category: "image",
     region: "us",
     access: "closed",
@@ -284,6 +311,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Adobe Firefly",
+    org: "Adobe",
     category: "image",
     region: "us",
     access: "closed",
@@ -294,6 +322,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Stable Diffusion",
+    org: "Stability AI",
     category: "image",
     region: "europe",
     access: "open",
@@ -306,6 +335,7 @@ window.ECOSYSTEM = [
   // ── video ─────────────────────────────────────────────────────────────────
   {
     name: "Veo",
+    org: "Google",
     category: "video",
     region: "us",
     access: "closed",
@@ -316,6 +346,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Sora",
+    org: "OpenAI",
     category: "video",
     region: "us",
     access: "closed",
@@ -326,6 +357,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Runway",
+    org: "Runway",
     category: "video",
     region: "us",
     access: "closed",
@@ -336,6 +368,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Kling (Kuaishou)",
+    org: "Kuaishou",
     category: "video",
     region: "china",
     access: "closed",
@@ -346,6 +379,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Luma Dream Machine",
+    org: "Luma",
     category: "video",
     region: "us",
     access: "closed",
@@ -356,6 +390,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Pika",
+    org: "Pika",
     category: "video",
     region: "us",
     access: "closed",
@@ -366,6 +401,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Grok Imagine",
+    org: "xAI",
     category: "video",
     region: "us",
     access: "closed",
@@ -376,6 +412,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Seedance (ByteDance)",
+    org: "ByteDance",
     category: "video",
     region: "china",
     access: "closed",
@@ -388,6 +425,7 @@ window.ECOSYSTEM = [
   // ── audio ─────────────────────────────────────────────────────────────────
   {
     name: "ElevenLabs",
+    org: "ElevenLabs",
     category: "audio",
     region: "us",
     access: "closed",
@@ -398,6 +436,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Suno",
+    org: "Suno",
     category: "audio",
     region: "us",
     access: "closed",
@@ -408,6 +447,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Udio",
+    org: "Udio",
     category: "audio",
     region: "us",
     access: "closed",
@@ -418,6 +458,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Cartesia",
+    org: "Cartesia",
     category: "audio",
     region: "us",
     access: "mixed",
@@ -428,6 +469,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Voxtral (Mistral)",
+    org: "Mistral",
     category: "audio",
     region: "europe",
     access: "open",
@@ -440,6 +482,7 @@ window.ECOSYSTEM = [
   // ── agents ────────────────────────────────────────────────────────────────
   {
     name: "Sierra",
+    org: "Sierra",
     category: "agents",
     region: "us",
     access: "closed",
@@ -450,6 +493,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Glean",
+    org: "Glean",
     category: "agents",
     region: "us",
     access: "closed",
@@ -460,6 +504,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Lindy",
+    org: "Lindy",
     category: "agents",
     region: "us",
     access: "closed",
@@ -470,6 +515,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Harvey",
+    org: "Harvey",
     category: "agents",
     region: "us",
     access: "closed",
@@ -480,6 +526,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "NotebookLM",
+    org: "Google",
     category: "agents",
     region: "us",
     access: "closed",
@@ -490,6 +537,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Perplexity Computer",
+    org: "Perplexity",
     category: "agents",
     region: "us",
     access: "closed",
@@ -500,6 +548,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Manus",
+    org: "Manus",
     category: "agents",
     region: "china",
     access: "closed",
@@ -512,6 +561,7 @@ window.ECOSYSTEM = [
   // ── infra ─────────────────────────────────────────────────────────────────
   {
     name: "NVIDIA",
+    org: "NVIDIA",
     category: "infra",
     region: "us",
     access: "closed",
@@ -522,6 +572,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Groq",
+    org: "Groq",
     category: "infra",
     region: "us",
     access: "closed",
@@ -532,6 +583,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Cerebras",
+    org: "Cerebras",
     category: "infra",
     region: "us",
     access: "mixed",
@@ -542,6 +594,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Together AI",
+    org: "Together AI",
     category: "infra",
     region: "us",
     access: "mixed",
@@ -552,6 +605,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Fireworks AI",
+    org: "Fireworks AI",
     category: "infra",
     region: "us",
     access: "mixed",
@@ -562,6 +616,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Hugging Face",
+    org: "Hugging Face",
     category: "infra",
     region: "us",
     access: "open",
@@ -574,6 +629,7 @@ window.ECOSYSTEM = [
   // ── open ──────────────────────────────────────────────────────────────────
   {
     name: "Llama (Meta)",
+    org: "Meta",
     category: "open",
     region: "us",
     access: "open",
@@ -584,6 +640,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "DeepSeek",
+    org: "DeepSeek",
     category: "open",
     region: "china",
     access: "open",
@@ -594,6 +651,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Qwen (Alibaba)",
+    org: "Alibaba",
     category: "open",
     region: "china",
     access: "open",
@@ -604,6 +662,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Mistral",
+    org: "Mistral",
     category: "open",
     region: "europe",
     access: "open",
@@ -614,6 +673,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "GLM (Z.ai)",
+    org: "Zhipu",
     category: "open",
     region: "china",
     access: "open",
@@ -624,6 +684,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Kimi (Moonshot)",
+    org: "Moonshot",
     category: "open",
     region: "china",
     access: "open",
@@ -634,6 +695,7 @@ window.ECOSYSTEM = [
   },
   {
     name: "Gemma (Google)",
+    org: "Google",
     category: "open",
     region: "us",
     access: "open",

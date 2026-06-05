@@ -51,7 +51,7 @@
   var STALE_DAYS = 90;
   var TODAY = new Date();
 
-  var state = { cats: new Set(), region: "all", q: "" };
+  var state = { cats: new Set(), region: "all", q: "", view: "cards" };
 
   /* ---- helpers ---------------------------------------------------------- */
   function daysSince(iso) {
@@ -162,6 +162,32 @@
   }
   resetBtn.addEventListener("click", resetAll);
 
+  /* ---- view toggle (cards / graph) -------------------------------------- */
+  var viewSeg = document.getElementById("viewSegment");
+  var graphView = document.getElementById("graphView");
+  function setView(v) {
+    state.view = v;
+    var isGraph = v === "graph";
+    Array.prototype.forEach.call(viewSeg.children, function (x) {
+      x.setAttribute("aria-pressed", String(x.getAttribute("data-view") === v));
+    });
+    document.body.classList.toggle("view-graph", isGraph);
+    graphView.hidden = !isGraph;
+    if (window.FrontierGraph) window.FrontierGraph.setVisible(isGraph);
+  }
+  viewSeg.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (b) setView(b.getAttribute("data-view"));
+  });
+
+  /* ---- expose state for the graph view ---------------------------------- */
+  window.Frontier = {
+    data: data,
+    categories: CATEGORIES,
+    isActive: function (e) { return catSelected(e.category) && matchesRegionSearch(e); },
+    onFilter: null
+  };
+
   /* ---- entry chip ------------------------------------------------------- */
   function entryHTML(e) {
     var stale = isStale(e);
@@ -245,6 +271,8 @@
       "showing <b>" + total + "</b> of " + data.length;
 
     resetBtn.disabled = state.cats.size === 0 && state.region === "all" && state.q === "";
+
+    if (window.Frontier && typeof window.Frontier.onFilter === "function") window.Frontier.onFilter();
   }
 
   render();

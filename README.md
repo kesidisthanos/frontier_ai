@@ -9,6 +9,7 @@ current is a data edit, not a code change.
 - **Filters**: multi-select category chips, an All / US / China / Europe region control, and a name/model/blurb search, plus a reset and a live total.
 - **Every entry is a chip** that opens the official site in a new tab, shows its current flagship and the date it was last verified, and is flagged stale once that date is over 90 days old.
 - **Light and dark** themes via `prefers-color-scheme`, self-contained CSS, no external resources.
+- **Two views**: the cards grid and an interactive **graph** (force-directed, Obsidian-style) that links each player to its category and parent company, so you can see who owns what across the ecosystem.
 
 ## Quick start
 
@@ -31,6 +32,7 @@ It is a static site, so there is nothing to install.
 ```js
 {
   name: "Anthropic",
+  org: "Anthropic",       // parent company or owner (groups nodes in the graph view)
   category: "frontier",   // frontier | search | coding | image | video | audio | agents | infra | open
   region: "us",           // us | china | europe   (primary base / origin)
   access: "closed",       // closed | open | mixed
@@ -90,6 +92,7 @@ frontier_ai/
 ├── index.html                # shell; loads the data then app.js
 ├── style.css                 # self-contained design tokens, light + dark
 ├── app.js                    # renders the cards and runs the filters
+├── graph.js                  # the force-directed graph view
 ├── data/
 │   └── ecosystem.js          # the single source of truth (edit this)
 ├── REFRESH.md                # ready-to-run prompt to update the data and open a PR

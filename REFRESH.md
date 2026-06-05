@@ -20,7 +20,8 @@ Today's date: run `date +%F` and use that ISO value for every lastVerified you t
 
 Do this:
 1. Read data/ecosystem.js. It is a window.ECOSYSTEM array of objects with this schema:
-   { name, category, region, access, flagship, blurb, url, lastVerified }
+   { name, org, category, region, access, flagship, blurb, url, lastVerified }
+     org      : parent company or owner (groups products in the graph view)
      category : frontier | search | coding | image | video | audio | agents | infra | open
      region   : us | china | europe        (primary base / origin)
      access   : closed | open | mixed
@@ -35,7 +36,8 @@ Do this:
 
 3. Add or remove players:
    - Add any clearly notable new entrant to the right category (keep categories balanced,
-     a handful of the most significant names each, not an exhaustive list).
+     a handful of the most significant names each, not an exhaustive list). Set its `org`
+     to the parent company so it connects correctly in the graph view.
    - Remove anything defunct, acquired into irrelevance, or renamed (update instead if renamed).
 
 4. Validate before committing:
