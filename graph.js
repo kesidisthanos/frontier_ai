@@ -116,6 +116,7 @@
   var W = 0, H = 0, alpha = 1, inited = false, visible = false, running = false, needsDraw = true;
   var cam = { x: 0, y: 0, k: 1 };
   var dragNode = null, panning = false, hoverNode = null, focusNode = null;
+  var userMoved = false;
   var neighbors = new Set(), activeOrg = null;
   var downX = 0, downY = 0, moved = false;
 
@@ -378,7 +379,7 @@
       showTooltip(dragNode); return;
     }
     if (panning) {
-      cam.x += ev.movementX; cam.y += ev.movementY; needsDraw = true;
+      cam.x += ev.movementX; cam.y += ev.movementY; needsDraw = true; userMoved = true;
       moved = moved || Math.abs(ev.clientX - downX) + Math.abs(ev.clientY - downY) > 4; return;
     }
     if (!visible) return;
@@ -406,7 +407,7 @@
     var r = canvas.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
     var wx = (mx - cam.x) / cam.k, wy = (my - cam.y) / cam.k;
     var k2 = clamp(cam.k * Math.exp(-ev.deltaY * 0.0016), 0.4, 4);
-    cam.k = k2; cam.x = mx - wx * k2; cam.y = my - wy * k2; needsDraw = true;
+    cam.k = k2; cam.x = mx - wx * k2; cam.y = my - wy * k2; needsDraw = true; userMoved = true;
   }, { passive: false });
 
   canvas.addEventListener("mouseleave", function () {
@@ -422,7 +423,7 @@
     force.forEach(function (n) { a = Math.min(a, n.x - n.r); b = Math.min(b, n.y - n.r); c = Math.max(c, n.x + n.r); d = Math.max(d, n.y + n.r); });
     var pad = 56, bw = Math.max(1, c - a), bh = Math.max(1, d - b);
     cam.k = clamp(Math.min((W - pad * 2) / bw, (H - pad * 2) / bh) * 0.9, 0.4, 1.9);
-    cam.x = (W - (a + c) * cam.k) / 2; cam.y = (H - (b + d) * cam.k) / 2; needsDraw = true;
+    cam.x = (W - (a + c) * cam.k) / 2; cam.y = (H - (b + d) * cam.k) / 2; needsDraw = true; userMoved = false;
   }
   view.querySelector(".graph-toolbar").addEventListener("click", function (ev) {
     var b = ev.target.closest("button"); if (!b) return;
@@ -437,7 +438,7 @@
 
   var mq = window.matchMedia("(prefers-color-scheme: dark)");
   (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(function () { readTheme(); needsDraw = true; });
-  window.addEventListener("resize", function () { if (visible) { resize(); needsDraw = true; } });
+  window.addEventListener("resize", function () { if (visible) { resize(); if (userMoved) needsDraw = true; else fit(); } });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { needsDraw = true; });
 
   window.FrontierGraph = {

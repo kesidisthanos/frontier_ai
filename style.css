@@ -634,4 +634,5 @@ body.view-graph .graph { display: block; }
   .showing { width: 100%; }
   .graph { height: 70vh; }
   .view-toggle { margin-top: 0.2rem; }
+  .segment button { height: 36px; }
 }
