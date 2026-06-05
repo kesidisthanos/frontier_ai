@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+.AppleDouble
+Icon?
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs and caches
+*.log
+.cache/
+
+# Node (not used now, but keeps stray installs out of the repo)
+node_modules/
+npm-debug.log*
+
+# Claude Code local preview config (machine-specific)
+.claude/

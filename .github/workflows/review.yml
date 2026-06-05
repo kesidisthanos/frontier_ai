@@ -1,0 +1,46 @@
+name: Monthly AI ecosystem review
+
+# Opens a checklist issue on the 1st of each month as a reminder to re-verify the
+# data in data/ecosystem.js. Run it manually any time from the Actions tab.
+on:
+  schedule:
+    - cron: "0 9 1 * *" # 09:00 UTC on the 1st
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  open-review-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open review issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const now = new Date();
+            const stamp = `${now.toLocaleString("en-US", { month: "long" })} ${now.getFullYear()}`;
+            const categories = [
+              "frontier", "search", "coding", "image", "video",
+              "audio", "agents", "infra", "open",
+            ];
+            const body = [
+              "Time for the monthly pass over the AI ecosystem data in `data/ecosystem.js`.",
+              "",
+              "Web-search each entry's official source, confirm the current flagship and blurb,",
+              "bump `lastVerified`, and add or remove players. The full prompt lives in `REFRESH.md`.",
+              "",
+              "### Categories to re-verify",
+              ...categories.map((c) => `- [ ] \`${c}\``),
+              "",
+              "### Wrap-up",
+              "- [ ] Bumped `lastVerified` on every changed entry",
+              "- [ ] Addressed anything flagged stale (over 90 days old)",
+              "- [ ] Opened a pull request with the diff",
+            ].join("\n");
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Monthly AI ecosystem review (${stamp})`,
+              body,
+            });

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="frontier_ai: a single-page, filterable map of the AI ecosystem across labs, search, coding, image, video, audio, agents, infrastructure, and open models.">
+  <title>frontier_ai · a living map of the AI ecosystem</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='19' font-size='19'>🛰️</text></svg>">
+</head>
+<body>
+  <main class="page">
+
+    <!-- Masthead -->
+    <header class="masthead">
+      <div class="masthead-lead">
+        <h1 class="brand">frontier<span class="u">_ai</span><span class="caret">█</span></h1>
+        <p class="tagline">A living map of who is building what across the AI ecosystem, kept current by editing one file.</p>
+        <p class="meta-line" id="metaLine"></p>
+      </div>
+      <div class="tally" aria-live="polite">
+        <div><span class="n" id="tallyN">0</span><span class="of" id="tallyOf"></span></div>
+        <div class="lbl">players shown</div>
+      </div>
+    </header>
+
+    <!-- Controls -->
+    <section class="controls" aria-label="Filters">
+      <div class="controls-row">
+        <div class="cat-filter" id="catFilter" role="group" aria-label="Filter by category"></div>
+      </div>
+      <div class="controls-row">
+        <div class="segment" id="regionSegment" role="group" aria-label="Filter by region">
+          <button type="button" data-region="all" aria-pressed="true">All</button>
+          <button type="button" data-region="us" aria-pressed="false">US</button>
+          <button type="button" data-region="china" aria-pressed="false">China</button>
+          <button type="button" data-region="europe" aria-pressed="false">Europe</button>
+        </div>
+
+        <div class="search" id="searchWrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Search name, model, or blurb…" aria-label="Search players">
+          <button type="button" class="clear" id="searchClear" aria-label="Clear search">✕</button>
+        </div>
+
+        <span class="spacer"></span>
+
+        <span class="showing" id="showing" aria-live="polite"></span>
+        <button type="button" class="reset" id="reset">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          Reset
+        </button>
+      </div>
+    </section>
+
+    <!-- Category cards render here -->
+    <div class="grid" id="grid"></div>
+
+    <!-- Footer -->
+    <footer class="foot">
+      <span id="footMeta"></span>
+      <span class="legend">
+        <span class="stale-dot"></span> flagged when last verified over 90 days ago
+      </span>
+      <span class="spacer"></span>
+      <a href="REFRESH.md">how to refresh</a>
+    </footer>
+  </main>
+
+  <!-- Data is the single source of truth; the UI is rendered from it. -->
+  <script src="data/ecosystem.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
