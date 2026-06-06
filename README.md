@@ -5,11 +5,11 @@ categories, from frontier labs to open-weight models. It is a plain static site 
 framework and no build step. The entire UI is rendered from one data file, so keeping it
 current is a data edit, not a code change.
 
-- **A living landscape map**: nine category territories on one canvas, each packed with compact product cells (company, status badge, pricing dot), so the whole ecosystem is visible at once.
-- **Company footprint**: hover a cell to surface a company's products, or open one and hit Footprint to light up everything that company builds across the entire map.
-- **Availability status** on every product (live, preview, beta, research, waitlist, announced, deprecated) and a **pricing tier** (free, freemium, paid, enterprise), both shown and filterable.
-- **Filters reshape the map live**: category chips, region (US / China / Europe), pricing, sort, and search, plus reset and a running total.
-- **Inline detail**: click any product for a popover (blurb, pricing, status, links); no page jumps, no side panels. Stale products (over 90 days unverified) are flagged.
+- **Drill-down map**: the nine categories on one screen; click a category to see its companies and their models, click a model for details, or open a company to see everything it builds.
+- **Graph mode**: a legible network of the nine category hubs and the companies, each linked to the categories it builds in; click a hub to drill in, a company to see its products.
+- **Availability status** on every product (live, preview, beta, research, waitlist, announced, deprecated) and a **pricing tier** (free, freemium, paid, enterprise), both shown and filterable, with the pricing key always in view.
+- **Filters** apply throughout: region (US / China / Europe), pricing, sort, and search, plus reset and a running total.
+- **Inline detail**: click any model for a popover (blurb, pricing, status, links); no side panels. Stale products (over 90 days unverified) are flagged.
 - **Theme toggle** (system / light / dark, remembered) plus self-contained CSS with embedded fonts, no external resources.
 
 ## Quick start
@@ -48,9 +48,9 @@ It is a static site, so there is nothing to install.
 }
 ```
 
-The whole map derives from this array: products are grouped into category territories, the
-filters and search reshape them live, and selecting a company highlights its footprint across
-the map. Add a product by appending an object; no other file needs to change.
+Everything derives from this array: the home groups products by `category`, drilling a
+category groups them by `org`, the graph links each company to the categories it appears in,
+and the filters apply throughout. Add a product by appending an object; nothing else changes.
 
 ## Keeping it current
 
@@ -97,7 +97,8 @@ The site is static and lives at the repository root, so it deploys as-is.
 frontier_ai/
 ├── index.html                # shell; loads the data then app.js
 ├── style.css                 # self-contained design tokens + embedded fonts, light + dark
-├── app.js                    # renders the landscape map, filters, popover, and footprint
+├── app.js                    # drill-down navigation, filters, and the model popover
+├── graph.js                  # the company-to-category graph mode
 ├── data/
 │   └── ecosystem.js          # the single source of truth (edit this)
 ├── REFRESH.md                # ready-to-run prompt to update the data and open a PR

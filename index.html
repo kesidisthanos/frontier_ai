@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="frontier_ai: a living map of who is building what across the AI ecosystem. Every category, every company, every product, with availability and pricing, on one screen.">
+  <meta name="description" content="frontier_ai: a living map of who is building what across the AI ecosystem. Drill from categories into companies into their models.">
   <title>frontier_ai · a living map of the AI ecosystem</title>
   <script>
     (function () {
@@ -33,15 +33,20 @@
         <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle color theme" title="Theme"></button>
         <div class="tally" aria-live="polite">
           <div><span class="n" id="tallyN">0</span><span class="of" id="tallyOf"></span></div>
-          <div class="lbl">products shown</div>
+          <div class="lbl" id="tallyLbl">products</div>
         </div>
       </div>
     </header>
 
     <!-- Controls -->
     <section class="controls" aria-label="Map controls">
-      <div class="controls-row">
-        <div class="cat-filter" id="catFilter" role="group" aria-label="Filter by category"></div>
+      <div class="controls-row top">
+        <div class="segment view-toggle" id="viewSegment" role="group" aria-label="View mode">
+          <button type="button" data-view="map" aria-pressed="true">Map</button>
+          <button type="button" data-view="graph" aria-pressed="false">Graph</button>
+        </div>
+        <span class="spacer"></span>
+        <div class="legend" id="priceLegend" aria-label="Pricing key"></div>
       </div>
       <div class="controls-row">
         <div class="segment" id="regionSegment" role="group" aria-label="Filter by region">
@@ -50,7 +55,6 @@
           <button type="button" data-region="china" aria-pressed="false">China</button>
           <button type="button" data-region="europe" aria-pressed="false">Europe</button>
         </div>
-
         <label class="sel-wrap" aria-label="Filter by pricing">
           <select id="priceSelect" class="sel">
             <option value="all">All pricing</option>
@@ -60,8 +64,7 @@
             <option value="enterprise">Enterprise</option>
           </select>
         </label>
-
-        <label class="sel-wrap" aria-label="Sort within categories">
+        <label class="sel-wrap" aria-label="Sort">
           <select id="sortSelect" class="sel">
             <option value="featured">Sort: Featured</option>
             <option value="name">Sort: A-Z</option>
@@ -69,14 +72,11 @@
             <option value="pricing">Sort: Pricing</option>
           </select>
         </label>
-
         <div class="search" id="searchWrap">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.6-3.6"/></svg>
           <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Search products and companies…" aria-label="Search">
           <button type="button" class="clear" id="searchClear" aria-label="Clear search">&#10005;</button>
         </div>
-
-        <button type="button" class="chip-isolate" id="isolate" hidden></button>
         <span class="spacer"></span>
         <span class="showing" id="showing" aria-live="polite"></span>
         <button type="button" class="reset" id="reset">
@@ -86,22 +86,38 @@
       </div>
     </section>
 
-    <!-- The map -->
-    <div class="map" id="map"></div>
+    <!-- Breadcrumb -->
+    <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+
+    <!-- Level 1: categories -->
+    <div class="home" id="home"></div>
+
+    <!-- Level 2: a category's companies and their models -->
+    <div class="cat-view" id="catView" hidden></div>
+
+    <!-- Graph mode -->
+    <section id="graphView" class="graph" hidden aria-label="Ecosystem graph">
+      <canvas id="graphCanvas"></canvas>
+      <div class="graph-toolbar">
+        <button type="button" data-g="zoomin" aria-label="Zoom in">+</button>
+        <button type="button" data-g="zoomout" aria-label="Zoom out">&#8722;</button>
+        <button type="button" data-g="fit" aria-label="Fit to view">&#10530;</button>
+      </div>
+      <div class="graph-hint">companies linked to the categories they build in &middot; click a node</div>
+    </section>
 
     <!-- Footer -->
     <footer class="foot">
       <span id="footMeta"></span>
-      <span class="legend" id="priceLegend"></span>
       <span class="spacer"></span>
       <a href="REFRESH.md">how to refresh</a>
     </footer>
   </main>
 
-  <!-- Inline detail popover -->
-  <div class="popover" id="popover" role="dialog" aria-label="Product details" hidden></div>
+  <div class="popover" id="popover" role="dialog" aria-label="Details" hidden></div>
 
   <script src="data/ecosystem.js"></script>
   <script src="app.js"></script>
+  <script src="graph.js"></script>
 </body>
 </html>
