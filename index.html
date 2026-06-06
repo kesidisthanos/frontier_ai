@@ -4,8 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="frontier_ai: a single-page, filterable map of the AI ecosystem across labs, search, coding, image, video, audio, agents, infrastructure, and open models.">
+  <meta name="description" content="frontier_ai: a living map of the AI ecosystem. Browse every company's products by category, expand a company to see its full lineup, see availability status, and explore the connections as a graph.">
   <title>frontier_ai · a living map of the AI ecosystem</title>
+  <!-- Resolve theme before paint to avoid a flash -->
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem("fa-theme") || "system";
+        var dark = pref === "dark" || (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.dataset.themePref = pref;
+      } catch (e) { document.documentElement.dataset.theme = "light"; }
+    })();
+  </script>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z' fill='%234f46e5'/></svg>">
 </head>
@@ -16,21 +27,25 @@
     <header class="masthead">
       <div class="masthead-lead">
         <h1 class="brand">frontier<span class="u">_ai</span><span class="caret"></span></h1>
-        <p class="tagline">A living map of who is building what across the AI ecosystem, kept current by editing one file.</p>
+        <p class="tagline">A living map of who is building what across the AI ecosystem. Every company opens into its full product line, with availability status, kept current by editing one file.</p>
         <p class="meta-line" id="metaLine"></p>
       </div>
-      <div class="tally" aria-live="polite">
-        <div><span class="n" id="tallyN">0</span><span class="of" id="tallyOf"></span></div>
-        <div class="lbl">players shown</div>
+      <div class="masthead-right">
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle color theme" title="Theme"></button>
+        <div class="tally" aria-live="polite">
+          <div><span class="n" id="tallyN">0</span><span class="of" id="tallyOf"></span></div>
+          <div class="lbl">products shown</div>
+        </div>
       </div>
     </header>
 
     <!-- Controls -->
-    <section class="controls" aria-label="Filters">
+    <section class="controls" aria-label="Filters and views">
       <div class="controls-row top">
         <div class="cat-filter" id="catFilter" role="group" aria-label="Filter by category"></div>
         <div class="segment view-toggle" id="viewSegment" role="group" aria-label="View mode">
-          <button type="button" data-view="cards" aria-pressed="true">Cards</button>
+          <button type="button" data-view="categories" aria-pressed="true">Categories</button>
+          <button type="button" data-view="companies" aria-pressed="false">Companies</button>
           <button type="button" data-view="graph" aria-pressed="false">Graph</button>
         </div>
       </div>
@@ -44,7 +59,7 @@
 
         <div class="search" id="searchWrap">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.6-3.6"/></svg>
-          <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Search name, model, or blurb…" aria-label="Search players">
+          <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Search product, company, model, or status…" aria-label="Search">
           <button type="button" class="clear" id="searchClear" aria-label="Clear search">✕</button>
         </div>
 
@@ -58,10 +73,13 @@
       </div>
     </section>
 
-    <!-- Category cards render here -->
+    <!-- Category view -->
     <div class="grid" id="grid"></div>
 
-    <!-- Graph view renders here -->
+    <!-- Companies view -->
+    <div class="companies" id="companies" hidden></div>
+
+    <!-- Graph view -->
     <section id="graphView" class="graph" hidden aria-label="Ecosystem graph">
       <canvas id="graphCanvas"></canvas>
       <div class="graph-toolbar">
@@ -78,15 +96,12 @@
     <!-- Footer -->
     <footer class="foot">
       <span id="footMeta"></span>
-      <span class="legend">
-        <span class="stale-dot"></span> flagged when last verified over 90 days ago
-      </span>
+      <span class="legend"><span class="stale-dot"></span> flagged when last verified over 90 days ago</span>
       <span class="spacer"></span>
       <a href="REFRESH.md">how to refresh</a>
     </footer>
   </main>
 
-  <!-- Data is the single source of truth; the UI is rendered from it. -->
   <script src="data/ecosystem.js"></script>
   <script src="app.js"></script>
   <script src="graph.js"></script>

@@ -42,6 +42,7 @@
     });
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function badge(s) { return s && s !== "ga" ? '<span class="badge" data-status="' + s + '">' + s + "</span>" : ""; }
   function hexToRgb(h) {
     h = (h || "").replace("#", "").trim();
     if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
@@ -69,7 +70,7 @@
   function readTheme() {
     var cs = getComputedStyle(document.documentElement);
     function v(k) { return cs.getPropertyValue(k).trim(); }
-    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var dark = document.documentElement.dataset.theme === "dark";
     var bgHex = (v("--bg").match(/#([0-9a-f]{3,6})/i) || ["#0b0b0f"])[0];
     theme = {
       dark: dark,
@@ -321,8 +322,8 @@
 
   function showTooltip(n) {
     if (!n) { tooltip.hidden = true; return; }
-    var sub = n.type === "player" ? esc(n.entry.flagship)
-      : n.type === "cat" ? (n.members.length + " players") : (n.members.length + " products");
+    var sub = n.type === "player" ? esc(n.entry.version || n.entry.org)
+      : n.type === "cat" ? (n.members.length + " products") : (n.members.length + " products");
     tooltip.innerHTML = "<span>" + esc(n.type === "player" ? n.entry.name : n.label) + "</span>" +
       '<span class="tt-flag">' + sub + "</span>";
     tooltip.hidden = false;
@@ -343,12 +344,12 @@
       var e = n.entry;
       panel.innerHTML =
         '<button class="gp-close" type="button" aria-label="Close">&#10005;</button>' +
-        '<div class="gp-cat" style="color:' + NODE[e.category].label + '">' + esc(e.category) + "</div>" +
+        '<div class="gp-cat" style="color:' + NODE[e.category].label + '">' + esc(e.category) + badge(e.status) + "</div>" +
         '<div class="gp-name">' + esc(e.name) + "</div>" +
-        '<div class="gp-flag">' + esc(e.flagship) + "</div>" +
+        '<div class="gp-flag">' + esc(e.org) + (e.version ? " · " + esc(e.version) : "") + "</div>" +
         '<div class="gp-blurb">' + esc(e.blurb) + "</div>" +
         '<div class="gp-meta"><span class="gp-tag">' + (REGION[e.region] || e.region) + "</span>" +
-        "<span>" + esc(e.access) + "</span><span>" + esc(e.org) + "</span><span>" + esc(e.lastVerified) + "</span></div>" +
+        "<span>" + esc(e.access) + "</span><span>" + esc(e.lastVerified) + "</span></div>" +
         '<a class="gp-visit" href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">Visit site &#8599;</a>';
     } else {
       panel.innerHTML =
@@ -436,8 +437,7 @@
     '<span class="lg"><span class="gly cat"></span>category</span>' +
     '<span class="lg"><span class="gly org"></span>company</span>';
 
-  var mq = window.matchMedia("(prefers-color-scheme: dark)");
-  (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(function () { readTheme(); needsDraw = true; });
+  // theme is driven by app.js, which calls FrontierGraph.refreshTheme() on change
   window.addEventListener("resize", function () { if (visible) { resize(); if (userMoved) needsDraw = true; else fit(); } });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { needsDraw = true; });
 
@@ -452,7 +452,8 @@
         alpha = ALPHA_MIN; updateOrgs(); fit();
       } else applyFilter();
       if (!running) { running = true; requestAnimationFrame(loop); }
-    }
+    },
+    refreshTheme: function () { readTheme(); needsDraw = true; }
   };
 
   applyFilter();
