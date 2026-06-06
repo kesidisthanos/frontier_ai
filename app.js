@@ -45,7 +45,21 @@
 
   var REGION = { us: "US", china: "CN", europe: "EU" };
   var STALE_DAYS = 90, TODAY = new Date();
-  var state = { cats: new Set(), region: "all", q: "", view: "categories" };
+  var state = { cats: new Set(), region: "all", q: "", view: "categories", sort: "featured" };
+
+  // Curated prominence so recognizable leaders lead each list (the "Featured" sort).
+  var PROMINENCE = ["Anthropic","OpenAI","Google","Meta","xAI","Microsoft","Mistral AI","DeepSeek","Alibaba","NVIDIA","Perplexity","Cognition","Anysphere","Midjourney","Black Forest Labs","Runway","Luma AI","Pika","ElevenLabs","Stability AI","Suno","Adobe","Moonshot AI","Z.ai","ByteDance","Tencent","Baidu","MiniMax","Kuaishou","Replit","Hugging Face","Groq","Cerebras","Together AI","Fireworks AI","Sierra","Glean","Harvey","Lindy","Manus","You.com","Udio","Cartesia"];
+  var ORG_RANK = {}; PROMINENCE.forEach(function (o, i) { ORG_RANK[o] = i; });
+  function rank(o) { return ORG_RANK.hasOwnProperty(o) ? ORG_RANK[o] : 999; }
+  var STATUS_RANK = { ga: 0, beta: 1, preview: 2, waitlist: 3, research: 4, announced: 5, deprecated: 6 };
+  function srank(s) { return STATUS_RANK[s] == null ? 9 : STATUS_RANK[s]; }
+  var SORT = {
+    featured: function (a, b) { return rank(a.org) - rank(b.org) || a.name.localeCompare(b.name); },
+    name: function (a, b) { return a.name.localeCompare(b.name); },
+    company: function (a, b) { return a.org.localeCompare(b.org) || (CAT_ORDER[a.category] - CAT_ORDER[b.category]) || a.name.localeCompare(b.name); },
+    status: function (a, b) { return srank(a.status) - srank(b.status) || a.name.localeCompare(b.name); }
+  };
+  function sortProds(arr) { return arr.slice().sort(SORT[state.sort] || SORT.featured); }
 
   /* ---- helpers ---------------------------------------------------------- */
   function daysSince(iso) { var d = new Date(iso + "T00:00:00"); return isNaN(d) ? 0 : Math.floor((TODAY - d) / 86400000); }
@@ -62,7 +76,7 @@
   function catSelected(key) { return state.cats.size === 0 || state.cats.has(key); }
   function isActive(p) { return catSelected(p.category) && matchesRegionSearch(p); }
   function monogram(name) { var w = name.replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean); return ((w.length > 1 ? w[0][0] + w[1][0] : name.slice(0, 2)) || "?").toUpperCase(); }
-  function previewOf(prods) { return prods.slice(0, 7).map(function (p) { return p.name; }).join(", "); }
+  function previewOf(prods) { return sortProds(prods).slice(0, 7).map(function (p) { return p.name; }).join(", "); }
 
   /* ---- static header / footer ------------------------------------------- */
   var ORG_NAMES = []; (function () { var seen = {}; data.forEach(function (p) { if (!seen[p.org]) { seen[p.org] = 1; ORG_NAMES.push(p.org); } }); })();
@@ -138,21 +152,31 @@
   }
   viewSeg.addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) setView(b.getAttribute("data-view")); });
 
+  /* ---- sort ------------------------------------------------------------- */
+  var sortSelect = document.getElementById("sortSelect");
+  sortSelect.value = state.sort;
+  sortSelect.addEventListener("change", function () {
+    state.sort = sortSelect.value;
+    render();
+    if (drawerOpen && lastDrawer) openDrawer(lastDrawer.kind, lastDrawer.key);
+  });
+
   /* ---- detail drawer ---------------------------------------------------- */
   var drawer = document.getElementById("drawer");
   var overlay = document.getElementById("drawerOverlay");
   var drawerHead = document.getElementById("drawerHead");
   var drawerBody = document.getElementById("drawerBody");
-  var drawerOpen = false, lastFocus = null, hideTimer = null;
+  var drawerOpen = false, lastFocus = null, hideTimer = null, lastDrawer = null;
 
   function drawerRow(p, kind) {
     return '<a class="drawer-row" data-cat="' + p.category + '" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(p.blurb) + '">' +
       '<span class="dr-dot" aria-hidden="true"></span><span class="dr-name">' + esc(p.name) + "</span>" + badge(p.status) +
-      '<span class="dr-tag">' + (kind === "category" ? esc(p.org) : esc(p.category)) + "</span>" +
+      '<span class="dr-tag">' + (kind === "category" ? esc(p.org) : "") + "</span>" +
       '<span class="dr-ver">' + (p.version ? esc(p.version) : "") + "</span>" +
       '<span class="dr-arrow" aria-hidden="true">↗</span></a>';
   }
   function openDrawer(kind, key) {
+    lastDrawer = { kind: kind, key: key };
     var prods, head;
     if (kind === "category") {
       var c = CAT_BY_KEY[key]; if (!c) return;
@@ -172,9 +196,17 @@
         '<div class="dh-meta"><span>' + esc(REGION[f.region] || f.region || "") + "</span><span>" + prods.length + " products</span>" +
         (f.orgUrl ? '<a class="dh-visit" href="' + esc(f.orgUrl) + '" target="_blank" rel="noopener noreferrer">visit site &#8599;</a>' : "") + "</div></div>";
     }
-    prods.sort(function (a, b) { return (CAT_ORDER[a.category] - CAT_ORDER[b.category]) || a.name.localeCompare(b.name); });
+    prods = sortProds(prods);
     drawerHead.innerHTML = head;
-    drawerBody.innerHTML = prods.map(function (p) { return drawerRow(p, kind); }).join("");
+    if (kind === "company") {
+      var groups = {};
+      prods.forEach(function (p) { (groups[p.category] = groups[p.category] || []).push(p); });
+      drawerBody.innerHTML = CATEGORIES.filter(function (c) { return groups[c.key]; }).map(function (c) {
+        return '<div class="dr-group">' + c.label + "</div>" + groups[c.key].map(function (p) { return drawerRow(p, kind); }).join("");
+      }).join("");
+    } else {
+      drawerBody.innerHTML = prods.map(function (p) { return drawerRow(p, kind); }).join("");
+    }
     drawerBody.scrollTop = 0;
     lastFocus = document.activeElement;
     clearTimeout(hideTimer);
@@ -224,7 +256,11 @@
     var byOrg = {};
     data.forEach(function (p) { if (matchesRegionSearch(p) && catSelected(p.category)) (byOrg[p.org] = byOrg[p.org] || []).push(p); });
     var orgs = ORG_NAMES.filter(function (o) { return byOrg[o]; });
-    orgs.sort(function (a, b) { return byOrg[b].length - byOrg[a].length || a.localeCompare(b); });
+    orgs.sort(function (a, b) {
+      if (state.sort === "featured") return rank(a) - rank(b) || a.localeCompare(b);
+      if (state.sort === "status") return byOrg[b].length - byOrg[a].length || a.localeCompare(b);
+      return a.localeCompare(b);
+    });
     var html = orgs.map(function (o, i) {
       var prods = byOrg[o];
       return '<button type="button" class="company-card tile" data-kind="company" data-key="' + esc(o) + '" style="--d:' + (i * 16) + 'ms">' +

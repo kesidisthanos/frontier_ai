@@ -400,3 +400,13 @@ body.view-graph .graph { display:block; }
 .drawer-row:hover .dr-arrow { opacity:1; color:var(--c-accent); }
 
 @media (max-width:560px){ .grid, .companies { grid-template-columns:1fr; } .drawer { width:100vw; } }
+
+
+/* ===== Sort control + grouped drawer (v2.3) ============================= */
+.sort-wrap { position:relative; display:inline-flex; }
+.sort-wrap::after { content:""; position:absolute; right:0.75rem; top:50%; width:7px; height:7px; border-right:2px solid var(--text-faint); border-bottom:2px solid var(--text-faint); transform:translateY(-70%) rotate(45deg); pointer-events:none; }
+.sort-select { height:38px; padding:0 2rem 0 0.9rem; border:var(--hair) solid var(--border-strong); border-radius:var(--r-pill); background:var(--surface); color:var(--text-muted); font-family:var(--font-display); font-size:0.82rem; font-weight:600; cursor:pointer; box-shadow:var(--sh-1); -webkit-appearance:none; appearance:none; }
+.sort-select:hover { color:var(--text); border-color:var(--accent); }
+.sort-select:focus-visible { outline:2px solid var(--ring); outline-offset:2px; }
+.dr-group { font-family:var(--font-mono); font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-faint); padding:0.8rem 0.6rem 0.35rem; position:sticky; top:0; background:color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:1; }
+.dr-group:first-child { padding-top:0.3rem; }

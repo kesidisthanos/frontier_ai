@@ -57,6 +57,15 @@
           <button type="button" data-region="europe" aria-pressed="false">Europe</button>
         </div>
 
+        <label class="sort-wrap" aria-label="Sort by">
+          <select id="sortSelect" class="sort-select">
+            <option value="featured">Sort: Featured</option>
+            <option value="name">Sort: A-Z</option>
+            <option value="company">Sort: Company</option>
+            <option value="status">Sort: Status</option>
+          </select>
+        </label>
+
         <div class="search" id="searchWrap">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.6-3.6"/></svg>
           <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Search product, company, model, or status…" aria-label="Search">
