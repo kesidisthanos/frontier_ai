@@ -1,29 +1,30 @@
 /* ============================================================================
-   frontier_ai (v2.2): master-detail UI. Categories and Companies render as
-   uniform tiles; clicking a tile opens a slide-in drawer with its products, so
-   the grid never reflows. Plus the theme toggle and filters. Graph is graph.js.
+   frontier_ai (v3): the living landscape map.
+   Renders nine category territories packed with product cells. Filters (region,
+   pricing, search, category) reshape the map; sort orders cells; clicking a cell
+   opens an inline popover; hovering shows a company's footprint; "Footprint"
+   isolates a company across the whole map. Self-contained, no dependencies.
    ========================================================================== */
 (function () {
   "use strict";
 
-  var grid = document.getElementById("grid");
-  var companiesEl = document.getElementById("companies");
+  var map = document.getElementById("map");
   var data = Array.isArray(window.ECOSYSTEM) ? window.ECOSYSTEM : null;
-
   if (!data || !data.length) {
-    grid.innerHTML = '<div class="empty"><h2>Couldn’t load the data</h2><p>data/ecosystem.js did not define a non-empty window.ECOSYSTEM array.</p></div>';
+    map.innerHTML = '<div class="empty"><h2>Couldn’t load the data</h2><p>data/ecosystem.js did not define a non-empty window.ECOSYSTEM array.</p></div>';
     return;
   }
+  data.forEach(function (p, i) { p._i = i; });
 
   var CATEGORIES = [
-    { key: "frontier", label: "Frontier", sub: "labs" },
+    { key: "frontier", label: "Frontier", sub: "labs & flagship models" },
     { key: "search",   label: "Search",   sub: "answer engines" },
-    { key: "coding",   label: "Coding",   sub: "dev tools" },
-    { key: "image",    label: "Image",    sub: "generation" },
+    { key: "coding",   label: "Coding",   sub: "dev tools & agents" },
+    { key: "image",    label: "Image",    sub: "generation & editing" },
     { key: "video",    label: "Video",    sub: "generation" },
     { key: "audio",    label: "Audio",    sub: "voice & music" },
-    { key: "agents",   label: "Agents",   sub: "autonomous" },
-    { key: "infra",    label: "Infra",    sub: "chips & clouds" },
+    { key: "agents",   label: "Agents",   sub: "autonomous & assistants" },
+    { key: "infra",    label: "Infra",    sub: "chips, clouds & APIs" },
     { key: "open",     label: "Open",     sub: "open weights" }
   ];
   var CAT_BY_KEY = {}, CAT_ORDER = {};
@@ -41,50 +42,49 @@
     open:     '<rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V7.6a4 4 0 0 1 7.7-1.5"/><circle cx="12" cy="15.4" r="1"/>'
   };
   function iconFor(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">' + (ICONS[k] || "") + "</svg>"; }
-  var ARROW = '<span class="tile-arrow" aria-hidden="true">&#8594;</span>';
 
-  var REGION = { us: "US", china: "CN", europe: "EU" };
-  var STALE_DAYS = 90, TODAY = new Date();
-  var state = { cats: new Set(), region: "all", q: "", view: "categories", sort: "featured" };
-
-  // Curated prominence so recognizable leaders lead each list (the "Featured" sort).
+  var REGION = { us: "US", china: "China", europe: "Europe" };
+  var PRICE_LABEL = { free: "Free", freemium: "Freemium", paid: "Paid", enterprise: "Enterprise" };
+  var PRICE_RANK = { free: 0, freemium: 1, paid: 2, enterprise: 3 };
+  var STATUS_RANK = { ga: 0, beta: 1, preview: 2, waitlist: 3, research: 4, announced: 5, deprecated: 6 };
+  function srank(s) { return STATUS_RANK[s] == null ? 9 : STATUS_RANK[s]; }
   var PROMINENCE = ["Anthropic","OpenAI","Google","Meta","xAI","Microsoft","Mistral AI","DeepSeek","Alibaba","NVIDIA","Perplexity","Cognition","Anysphere","Midjourney","Black Forest Labs","Runway","Luma AI","Pika","ElevenLabs","Stability AI","Suno","Adobe","Moonshot AI","Z.ai","ByteDance","Tencent","Baidu","MiniMax","Kuaishou","Replit","Hugging Face","Groq","Cerebras","Together AI","Fireworks AI","Sierra","Glean","Harvey","Lindy","Manus","You.com","Udio","Cartesia"];
   var ORG_RANK = {}; PROMINENCE.forEach(function (o, i) { ORG_RANK[o] = i; });
   function rank(o) { return ORG_RANK.hasOwnProperty(o) ? ORG_RANK[o] : 999; }
-  var STATUS_RANK = { ga: 0, beta: 1, preview: 2, waitlist: 3, research: 4, announced: 5, deprecated: 6 };
-  function srank(s) { return STATUS_RANK[s] == null ? 9 : STATUS_RANK[s]; }
+
   var SORT = {
     featured: function (a, b) { return rank(a.org) - rank(b.org) || a.name.localeCompare(b.name); },
     name: function (a, b) { return a.name.localeCompare(b.name); },
-    company: function (a, b) { return a.org.localeCompare(b.org) || (CAT_ORDER[a.category] - CAT_ORDER[b.category]) || a.name.localeCompare(b.name); },
-    status: function (a, b) { return srank(a.status) - srank(b.status) || a.name.localeCompare(b.name); }
+    status: function (a, b) { return srank(a.status) - srank(b.status) || rank(a.org) - rank(b.org) || a.name.localeCompare(b.name); },
+    pricing: function (a, b) { return (PRICE_RANK[a.pricing] - PRICE_RANK[b.pricing]) || rank(a.org) - rank(b.org) || a.name.localeCompare(b.name); }
   };
   function sortProds(arr) { return arr.slice().sort(SORT[state.sort] || SORT.featured); }
 
-  /* ---- helpers ---------------------------------------------------------- */
-  function daysSince(iso) { var d = new Date(iso + "T00:00:00"); return isNaN(d) ? 0 : Math.floor((TODAY - d) / 86400000); }
+  var state = { cats: new Set(), region: "all", price: "all", q: "", sort: "featured", company: null };
+
+  function daysSince(iso) { var d = new Date(iso + "T00:00:00"); return isNaN(d) ? 0 : Math.floor((new Date() - d) / 86400000); }
+  function isStale(p) { return daysSince(p.lastVerified) > 90; }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function badge(status) { return status && status !== "ga" ? '<span class="badge" data-status="' + status + '">' + status + "</span>" : ""; }
-  function matchesRegionSearch(p) {
+  function badge(status) { return status && status !== "ga" ? '<span class="badge">' + status + "</span>" : ""; }
+  function matches(p) {
     if (state.region !== "all" && p.region !== state.region) return false;
+    if (state.price !== "all" && p.pricing !== state.price) return false;
     if (state.q) {
-      var hay = (p.name + " " + p.org + " " + (p.version || "") + " " + (p.blurb || "") + " " + p.category + " " + p.status).toLowerCase();
+      var hay = (p.name + " " + p.org + " " + (p.version || "") + " " + (p.blurb || "") + " " + p.status + " " + p.pricing).toLowerCase();
       if (hay.indexOf(state.q) === -1) return false;
     }
     return true;
   }
-  function catSelected(key) { return state.cats.size === 0 || state.cats.has(key); }
-  function isActive(p) { return catSelected(p.category) && matchesRegionSearch(p); }
-  function monogram(name) { var w = name.replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean); return ((w.length > 1 ? w[0][0] + w[1][0] : name.slice(0, 2)) || "?").toUpperCase(); }
-  function previewOf(prods) { return sortProds(prods).slice(0, 7).map(function (p) { return p.name; }).join(", "); }
+  function catSelected(k) { return state.cats.size === 0 || state.cats.has(k); }
 
-  /* ---- static header / footer ------------------------------------------- */
-  var ORG_NAMES = []; (function () { var seen = {}; data.forEach(function (p) { if (!seen[p.org]) { seen[p.org] = 1; ORG_NAMES.push(p.org); } }); })();
-  var latest = data.reduce(function (a, p) { return p.lastVerified > a ? p.lastVerified : a; }, "0000-00-00");
-  document.getElementById("metaLine").innerHTML =
-    data.length + ' products <span class="dot">·</span> ' + ORG_NAMES.length + ' companies <span class="dot">·</span> ' +
-    CATEGORIES.length + ' categories <span class="dot">·</span> updated ' + esc(latest);
+  /* ---- static text ------------------------------------------------------ */
+  var ORG_NAMES = []; (function () { var s = {}; data.forEach(function (p) { if (!s[p.org]) { s[p.org] = 1; ORG_NAMES.push(p.org); } }); })();
+  var latest = data.reduce(function (a, p) { return p.lastVerified > a ? p.lastVerified : a; }, "0");
+  document.getElementById("metaLine").innerHTML = data.length + ' products <span class="dot">·</span> ' + ORG_NAMES.length + ' companies <span class="dot">·</span> ' + CATEGORIES.length + ' categories <span class="dot">·</span> updated ' + esc(latest);
   document.getElementById("footMeta").textContent = data.length + " products · " + ORG_NAMES.length + " companies · last verified " + latest;
+  document.getElementById("priceLegend").innerHTML = ["free", "freemium", "paid", "enterprise"].map(function (k) {
+    return '<span class="lg" data-price="' + k + '"><span class="pdot"></span>' + PRICE_LABEL[k] + "</span>";
+  }).join("");
 
   /* ---- theme ------------------------------------------------------------ */
   var themeToggle = document.getElementById("themeToggle");
@@ -101,13 +101,12 @@
     document.documentElement.dataset.theme = dark ? "dark" : "light";
     themeToggle.innerHTML = THEME_ICON[pref];
     themeToggle.title = "Theme: " + pref + " (click to change)";
-    if (window.FrontierGraph && window.FrontierGraph.refreshTheme) window.FrontierGraph.refreshTheme();
   }
   themeToggle.addEventListener("click", function () { var o = ["system", "light", "dark"], i = o.indexOf(themePref()); applyTheme(o[(i + 1) % 3]); });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { if (themePref() === "system") applyTheme("system"); });
   applyTheme(themePref());
 
-  /* ---- category filter chips -------------------------------------------- */
+  /* ---- controls --------------------------------------------------------- */
   var catFilter = document.getElementById("catFilter");
   CATEGORIES.forEach(function (c) {
     var b = document.createElement("button");
@@ -116,189 +115,136 @@
     b.addEventListener("click", function () { if (state.cats.has(c.key)) state.cats.delete(c.key); else state.cats.add(c.key); render(); });
     catFilter.appendChild(b);
   });
-
-  /* ---- region + search + reset ------------------------------------------ */
   var regionSeg = document.getElementById("regionSegment");
   regionSeg.addEventListener("click", function (ev) {
-    var btn = ev.target.closest("button"); if (!btn) return;
-    state.region = btn.getAttribute("data-region");
-    Array.prototype.forEach.call(regionSeg.children, function (x) { x.setAttribute("aria-pressed", String(x === btn)); });
+    var b = ev.target.closest("button"); if (!b) return;
+    state.region = b.getAttribute("data-region");
+    Array.prototype.forEach.call(regionSeg.children, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
     render();
   });
+  var priceSelect = document.getElementById("priceSelect");
+  priceSelect.addEventListener("change", function () { state.price = priceSelect.value; render(); });
+  var sortSelect = document.getElementById("sortSelect");
+  sortSelect.addEventListener("change", function () { state.sort = sortSelect.value; render(); });
   var searchWrap = document.getElementById("searchWrap");
   var search = document.getElementById("search");
   search.addEventListener("input", function () { state.q = search.value.trim().toLowerCase(); searchWrap.classList.toggle("has-value", search.value.length > 0); render(); });
   document.getElementById("searchClear").addEventListener("click", function () { search.value = ""; state.q = ""; searchWrap.classList.remove("has-value"); search.focus(); render(); });
+  var isolateChip = document.getElementById("isolate");
+  isolateChip.addEventListener("click", function () { state.company = null; render(); });
   var resetBtn = document.getElementById("reset");
   function resetAll() {
-    state.cats.clear(); state.region = "all"; state.q = ""; search.value = ""; searchWrap.classList.remove("has-value");
+    state.cats.clear(); state.region = "all"; state.price = "all"; state.q = ""; state.company = null;
+    search.value = ""; searchWrap.classList.remove("has-value"); priceSelect.value = "all";
     Array.prototype.forEach.call(regionSeg.children, function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-region") === "all")); });
     render();
   }
   resetBtn.addEventListener("click", resetAll);
 
-  /* ---- view toggle ------------------------------------------------------ */
-  var viewSeg = document.getElementById("viewSegment");
-  var graphView = document.getElementById("graphView");
-  function setView(v) {
-    state.view = v;
-    Array.prototype.forEach.call(viewSeg.children, function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-view") === v)); });
-    document.body.classList.remove("view-categories", "view-companies", "view-graph");
-    document.body.classList.add("view-" + v);
-    graphView.hidden = v !== "graph";
-    if (window.FrontierGraph) window.FrontierGraph.setVisible(v === "graph");
-    closeDrawer();
-    render();
+  /* ---- popover ---------------------------------------------------------- */
+  var popover = document.getElementById("popover");
+  var popOpen = false, popCell = null;
+  function closePopover() { if (!popOpen) return; popOpen = false; popCell = null; popover.hidden = true; }
+  function openPopover(p, cellEl) {
+    var c = CAT_BY_KEY[p.category];
+    popover.dataset.cat = p.category; popover.dataset.price = p.pricing;
+    popover.innerHTML =
+      '<button class="pv-close" id="pvClose" type="button" aria-label="Close">&#10005;</button>' +
+      '<div class="pv-cat">' + esc(c.label) + badge(p.status) + "</div>" +
+      '<div class="pv-name">' + esc(p.name) + "</div>" +
+      '<div class="pv-org">' + esc(p.org) + (p.version ? ' <span class="v">' + esc(p.version) + "</span>" : "") + "</div>" +
+      '<div class="pv-blurb">' + esc(p.blurb) + "</div>" +
+      '<div class="pv-tags">' +
+        '<span class="pv-tag" data-price="' + p.pricing + '"><span class="pdot"></span>' + PRICE_LABEL[p.pricing] + "</span>" +
+        '<span class="pv-tag">' + esc(p.access) + "</span>" +
+        '<span class="pv-tag">' + (REGION[p.region] || p.region) + "</span>" +
+        '<span class="pv-tag">' + esc(p.lastVerified) + "</span>" +
+      "</div>" +
+      '<div class="pv-actions">' +
+        '<a class="pv-visit" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">Visit site &#8599;</a>' +
+        '<button type="button" class="pv-kin" id="pvKin">Footprint</button>' +
+      "</div>";
+    popover.hidden = false; popOpen = true; popCell = cellEl;
+    position(cellEl);
+    document.getElementById("pvClose").addEventListener("click", closePopover);
+    document.getElementById("pvKin").addEventListener("click", function () { state.company = p.org; closePopover(); render(); });
   }
-  viewSeg.addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) setView(b.getAttribute("data-view")); });
+  function position(cellEl) {
+    var r = cellEl.getBoundingClientRect();
+    var pw = popover.offsetWidth, ph = popover.offsetHeight;
+    var vw = document.documentElement.clientWidth;
+    var left = Math.min(r.left + window.scrollX, window.scrollX + vw - pw - 12);
+    left = Math.max(window.scrollX + 12, left);
+    var top = (r.bottom + ph + 10 < window.innerHeight) ? (r.bottom + window.scrollY + 8) : (r.top + window.scrollY - ph - 8);
+    if (top < window.scrollY + 8) top = window.scrollY + 8;
+    popover.style.left = left + "px"; popover.style.top = top + "px";
+  }
+  document.addEventListener("click", function (ev) { if (popOpen && !popover.contains(ev.target) && !ev.target.closest(".cell")) closePopover(); });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { if (popOpen) closePopover(); else if (state.company) { state.company = null; render(); } } });
+  window.addEventListener("scroll", closePopover, true);
+  window.addEventListener("resize", closePopover);
 
-  /* ---- sort ------------------------------------------------------------- */
-  var sortSelect = document.getElementById("sortSelect");
-  sortSelect.value = state.sort;
-  sortSelect.addEventListener("change", function () {
-    state.sort = sortSelect.value;
-    render();
-    if (drawerOpen && lastDrawer) openDrawer(lastDrawer.kind, lastDrawer.key);
+  /* ---- footprint hover -------------------------------------------------- */
+  var hoverOrg = null;
+  map.addEventListener("mouseover", function (ev) {
+    var cell = ev.target.closest(".cell"); if (!cell) return;
+    var org = cell.getAttribute("data-org"); if (org === hoverOrg || state.company) return;
+    hoverOrg = org;
+    map.querySelectorAll(".cell").forEach(function (x) { x.classList.toggle("hover-kin", x.getAttribute("data-org") === org); });
+  });
+  map.addEventListener("mouseout", function (ev) {
+    if (!ev.target.closest(".cell")) return;
+    hoverOrg = null;
+    if (!state.company) map.querySelectorAll(".cell.hover-kin").forEach(function (x) { x.classList.remove("hover-kin"); });
+  });
+  map.addEventListener("click", function (ev) {
+    var cell = ev.target.closest(".cell"); if (!cell) return;
+    ev.stopPropagation();
+    var p = data[+cell.getAttribute("data-i")];
+    if (popOpen && popCell === cell) { closePopover(); return; }
+    openPopover(p, cell);
   });
 
-  /* ---- detail drawer ---------------------------------------------------- */
-  var drawer = document.getElementById("drawer");
-  var overlay = document.getElementById("drawerOverlay");
-  var drawerHead = document.getElementById("drawerHead");
-  var drawerBody = document.getElementById("drawerBody");
-  var drawerOpen = false, lastFocus = null, hideTimer = null, lastDrawer = null;
-
-  function drawerRow(p, kind) {
-    return '<a class="drawer-row" data-cat="' + p.category + '" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(p.blurb) + '">' +
-      '<span class="dr-dot" aria-hidden="true"></span><span class="dr-name">' + esc(p.name) + "</span>" + badge(p.status) +
-      '<span class="dr-tag">' + (kind === "category" ? esc(p.org) : "") + "</span>" +
-      '<span class="dr-ver">' + (p.version ? esc(p.version) : "") + "</span>" +
-      '<span class="dr-arrow" aria-hidden="true">↗</span></a>';
-  }
-  function openDrawer(kind, key) {
-    lastDrawer = { kind: kind, key: key };
-    var prods, head;
-    if (kind === "category") {
-      var c = CAT_BY_KEY[key]; if (!c) return;
-      prods = data.filter(function (p) { return p.category === key && matchesRegionSearch(p); });
-      drawer.dataset.cat = key;
-      head = '<span class="dh-icon cat" aria-hidden="true">' + iconFor(key) + "</span>" +
-        '<div class="dh-main"><div class="dh-kind">category &middot; ' + esc(c.sub) + "</div>" +
-        '<div class="dh-name">' + c.label + "</div>" +
-        '<div class="dh-meta"><span>' + prods.length + " products</span></div></div>";
-    } else {
-      prods = data.filter(function (p) { return p.org === key && catSelected(p.category) && matchesRegionSearch(p); });
-      delete drawer.dataset.cat;
-      var f = prods[0] || {};
-      head = '<span class="dh-icon org" aria-hidden="true">' + esc(monogram(key)) + "</span>" +
-        '<div class="dh-main"><div class="dh-kind">company</div>' +
-        '<div class="dh-name">' + esc(key) + "</div>" +
-        '<div class="dh-meta"><span>' + esc(REGION[f.region] || f.region || "") + "</span><span>" + prods.length + " products</span>" +
-        (f.orgUrl ? '<a class="dh-visit" href="' + esc(f.orgUrl) + '" target="_blank" rel="noopener noreferrer">visit site &#8599;</a>' : "") + "</div></div>";
-    }
-    prods = sortProds(prods);
-    drawerHead.innerHTML = head;
-    if (kind === "company") {
-      var groups = {};
-      prods.forEach(function (p) { (groups[p.category] = groups[p.category] || []).push(p); });
-      drawerBody.innerHTML = CATEGORIES.filter(function (c) { return groups[c.key]; }).map(function (c) {
-        return '<div class="dr-group">' + c.label + "</div>" + groups[c.key].map(function (p) { return drawerRow(p, kind); }).join("");
-      }).join("");
-    } else {
-      drawerBody.innerHTML = prods.map(function (p) { return drawerRow(p, kind); }).join("");
-    }
-    drawerBody.scrollTop = 0;
-    lastFocus = document.activeElement;
-    clearTimeout(hideTimer);
-    drawer.hidden = false; overlay.hidden = false; drawerOpen = true;
-    document.body.style.overflow = "hidden";
-    requestAnimationFrame(function () { overlay.classList.add("show"); drawer.classList.add("show"); });
-    document.getElementById("drawerClose").focus();
-  }
-  function closeDrawer() {
-    if (!drawerOpen) return;
-    drawerOpen = false;
-    overlay.classList.remove("show"); drawer.classList.remove("show");
-    document.body.style.overflow = "";
-    hideTimer = setTimeout(function () { drawer.hidden = true; overlay.hidden = true; }, 260);
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
-  }
-  document.getElementById("drawerClose").addEventListener("click", closeDrawer);
-  overlay.addEventListener("click", closeDrawer);
-  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && drawerOpen) closeDrawer(); });
-  function onTileClick(ev) { var t = ev.target.closest("[data-kind]"); if (t) openDrawer(t.getAttribute("data-kind"), t.getAttribute("data-key")); }
-  grid.addEventListener("click", onTileClick);
-  companiesEl.addEventListener("click", onTileClick);
-
-  /* ---- expose for graph ------------------------------------------------- */
-  window.Frontier = { data: data, categories: CATEGORIES, isActive: isActive, onFilter: null };
-
-  /* ---- tiles ------------------------------------------------------------ */
-  function renderCategoryTiles(animate) {
-    var html = "", shown = 0;
-    CATEGORIES.forEach(function (c) {
-      if (!catSelected(c.key)) return;
-      var items = data.filter(function (p) { return p.category === c.key && matchesRegionSearch(p); });
-      if (!items.length) return;
-      shown++;
-      html += '<button type="button" class="cat-card tile" data-cat="' + c.key + '" data-kind="category" data-key="' + c.key + '" style="--d:' + (shown * 28) + 'ms">' +
-        '<span class="tile-icon cat" aria-hidden="true">' + iconFor(c.key) + "</span>" +
-        '<span class="tile-main"><span class="tile-name">' + c.label + "</span>" +
-        '<span class="tile-sub">' + esc(c.sub) + "</span>" +
-        '<span class="tile-preview">' + esc(previewOf(items)) + "</span></span>" +
-        '<span class="tile-count">' + items.length + "</span>" + ARROW + "</button>";
-    });
-    grid.className = "grid" + (animate ? " animate" : "");
-    grid.innerHTML = html || emptyHTML("emptyReset");
-    wireEmpty("emptyReset");
-  }
-  function renderCompanyTiles(animate) {
-    var byOrg = {};
-    data.forEach(function (p) { if (matchesRegionSearch(p) && catSelected(p.category)) (byOrg[p.org] = byOrg[p.org] || []).push(p); });
-    var orgs = ORG_NAMES.filter(function (o) { return byOrg[o]; });
-    orgs.sort(function (a, b) {
-      if (state.sort === "featured") return rank(a) - rank(b) || a.localeCompare(b);
-      if (state.sort === "status") return byOrg[b].length - byOrg[a].length || a.localeCompare(b);
-      return a.localeCompare(b);
-    });
-    var html = orgs.map(function (o, i) {
-      var prods = byOrg[o];
-      return '<button type="button" class="company-card tile" data-kind="company" data-key="' + esc(o) + '" style="--d:' + (i * 16) + 'ms">' +
-        '<span class="tile-icon org" aria-hidden="true">' + esc(monogram(o)) + "</span>" +
-        '<span class="tile-main"><span class="tile-name">' + esc(o) + "</span>" +
-        '<span class="tile-sub">' + esc(REGION[prods[0].region] || prods[0].region) + " &middot; " + prods.length + " products</span>" +
-        '<span class="tile-preview">' + esc(previewOf(prods)) + "</span></span>" +
-        '<span class="tile-count">' + prods.length + "</span>" + ARROW + "</button>";
-    }).join("");
-    companiesEl.className = "companies" + (animate ? " animate" : "");
-    companiesEl.innerHTML = html || emptyHTML("emptyReset2");
-    wireEmpty("emptyReset2");
-  }
-  function emptyHTML(id) { return '<div class="empty"><h2>Nothing matches these filters</h2><p>Try a different region, clear the search, or reset.</p><button type="button" id="' + id + '">Reset filters</button></div>'; }
-  function wireEmpty(id) { var er = document.getElementById(id); if (er) er.addEventListener("click", resetAll); }
-
   /* ---- render ----------------------------------------------------------- */
+  function cellHTML(p) {
+    return '<button type="button" class="cell' + (isStale(p) ? " is-stale" : "") + '" data-cat="' + p.category + '" data-org="' + esc(p.org) + '" data-price="' + p.pricing + '" data-i="' + p._i + '"' + (p.status && p.status !== "ga" ? ' data-status="' + p.status + '"' : "") + ">" +
+      '<span class="cell-top"><span class="pdot" aria-hidden="true"></span><span class="cell-name">' + esc(p.name) + "</span>" + badge(p.status) + "</span>" +
+      '<span class="cell-org">' + esc(p.org) + "</span></button>";
+  }
   var first = true;
   function render() {
+    closePopover();
     var counts = {}; CATEGORIES.forEach(function (c) { counts[c.key] = 0; });
-    data.forEach(function (p) { if (matchesRegionSearch(p) && counts.hasOwnProperty(p.category)) counts[p.category]++; });
+    data.forEach(function (p) { if (matches(p) && counts.hasOwnProperty(p.category)) counts[p.category]++; });
     CATEGORIES.forEach(function (c) {
       var k = catFilter.querySelector('[data-k="' + c.key + '"]'); if (k) k.textContent = counts[c.key];
       var chip = catFilter.querySelector('.chip-cat[data-cat="' + c.key + '"]'); if (chip) chip.setAttribute("aria-pressed", String(state.cats.has(c.key)));
     });
-    var total = data.filter(isActive).length;
+
+    var html = "", shown = 0, total = 0;
+    CATEGORIES.forEach(function (c) {
+      if (!catSelected(c.key)) return;
+      var items = sortProds(data.filter(function (p) { return p.category === c.key && matches(p); }));
+      if (!items.length) return;
+      shown++; total += items.length;
+      html += '<section class="territory" data-cat="' + c.key + '" style="--d:' + (shown * 35) + 'ms">' +
+        '<div class="t-head"><span class="t-icon" aria-hidden="true">' + iconFor(c.key) + "</span>" +
+        '<div class="t-title"><div class="t-name">' + c.label + '</div><div class="t-sub">' + esc(c.sub) + "</div></div>" +
+        '<span class="t-count">' + items.length + "</span></div>" +
+        '<div class="t-cells">' + items.map(cellHTML).join("") + "</div></section>";
+    });
+    map.className = "map" + (first ? " animate" : "") + (state.company ? " isolating" : "");
+    map.innerHTML = html || '<div class="empty"><h2>Nothing matches these filters</h2><p>Try a different region, pricing, or search, or reset.</p><button type="button" id="emptyReset">Reset</button></div>';
+    var er = document.getElementById("emptyReset"); if (er) er.addEventListener("click", resetAll);
+    if (state.company) map.querySelectorAll(".cell").forEach(function (x) { x.classList.toggle("kin", x.getAttribute("data-org") === state.company); });
+    if (first) { first = false; setTimeout(function () { map.classList.remove("animate"); }, 800); }
+
     document.getElementById("tallyN").textContent = total;
     document.getElementById("tallyOf").textContent = " / " + data.length;
     document.getElementById("showing").innerHTML = "showing <b>" + total + "</b> of " + data.length;
-    resetBtn.disabled = state.cats.size === 0 && state.region === "all" && state.q === "";
-
-    if (state.view === "categories") renderCategoryTiles(first);
-    else if (state.view === "companies") renderCompanyTiles(first);
-    if (first) { first = false; setTimeout(function () { grid.classList.remove("animate"); companiesEl.classList.remove("animate"); }, 800); }
-
-    if (window.Frontier && typeof window.Frontier.onFilter === "function") window.Frontier.onFilter();
+    isolateChip.hidden = !state.company; isolateChip.textContent = state.company || "";
+    resetBtn.disabled = state.cats.size === 0 && state.region === "all" && state.price === "all" && state.q === "" && !state.company;
   }
 
-  document.body.classList.add("view-categories");
   render();
 })();

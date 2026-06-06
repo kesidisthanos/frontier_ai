@@ -21,12 +21,13 @@ Today's date: run `date +%F` and use that ISO value for every lastVerified you t
 Do this:
 1. Read data/ecosystem.js. It is a flat window.ECOSYSTEM array of PRODUCTS; each product
    belongs to an org (company or lab). Schema:
-   { name, org, category, region, access, status, version, blurb, url, orgUrl, lastVerified }
+   { name, org, category, region, access, status, pricing, version, blurb, url, orgUrl, lastVerified }
      org      : the company or lab that makes the product
      category : frontier | search | coding | image | video | audio | agents | infra | open
      region   : us | china | europe        (the org's primary base)
      access   : closed | open | mixed
      status   : ga | preview | beta | research | waitlist | announced | deprecated
+     pricing  : free | freemium | paid | enterprise
      version  : current model or version (or empty string)
      orgUrl   : the org's official site
      lastVerified : YYYY-MM-DD
@@ -46,7 +47,7 @@ Do this:
    - Remove anything fully retired, or set its `status` to deprecated if it is winding down.
 
 4. Validate before committing:
-   - Every object keeps all eleven keys.
+   - Every object keeps all twelve keys.
    - category, region, and access use only the allowed values above.
    - lastVerified is valid ISO YYYY-MM-DD.
    - Open index.html (or run `python3 -m http.server` and load it) and confirm it renders,

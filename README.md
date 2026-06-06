@@ -5,11 +5,12 @@ categories, from frontier labs to open-weight models. It is a plain static site 
 framework and no build step. The entire UI is rendered from one data file, so keeping it
 current is a data edit, not a code change.
 
-- **Three views** of one product catalog: **Categories** (nine branches), **Companies** (every company opens into its full product line), and an interactive **Graph** (force-directed) that clusters products by category with faint company links.
-- **Availability status** on every product (live, preview, beta, research, waitlist, announced, deprecated), so things not yet fully released are visible at a glance.
-- **Filters**: multi-select category chips, an All / US / China / Europe region control, and a product/company/model/status search, plus reset and a live total.
+- **A living landscape map**: nine category territories on one canvas, each packed with compact product cells (company, status badge, pricing dot), so the whole ecosystem is visible at once.
+- **Company footprint**: hover a cell to surface a company's products, or open one and hit Footprint to light up everything that company builds across the entire map.
+- **Availability status** on every product (live, preview, beta, research, waitlist, announced, deprecated) and a **pricing tier** (free, freemium, paid, enterprise), both shown and filterable.
+- **Filters reshape the map live**: category chips, region (US / China / Europe), pricing, sort, and search, plus reset and a running total.
+- **Inline detail**: click any product for a popover (blurb, pricing, status, links); no page jumps, no side panels. Stale products (over 90 days unverified) are flagged.
 - **Theme toggle** (system / light / dark, remembered) plus self-contained CSS with embedded fonts, no external resources.
-- Each product opens its official site, shows its version and last-verified date, and is flagged stale after 90 days.
 
 ## Quick start
 
@@ -38,6 +39,7 @@ It is a static site, so there is nothing to install.
   region: "us",            // us | china | europe   (the org's primary base)
   access: "closed",        // closed | open | mixed
   status: "ga",            // ga | preview | beta | research | waitlist | announced | deprecated
+  pricing: "freemium",     // free | freemium | paid | enterprise
   version: "Opus 4.8",     // current model or version (or "")
   blurb: "Safety-focused assistant family (Opus, Sonnet, Haiku) used via apps and API.",
   url: "https://claude.ai",
@@ -46,13 +48,13 @@ It is a static site, so there is nothing to install.
 }
 ```
 
-Every view derives from this array: the Categories grid groups by `category`, the Companies
-view groups by `org`, and the Graph links products to category and company hubs. Add a
-product by appending an object; no other file needs to change.
+The whole map derives from this array: products are grouped into category territories, the
+filters and search reshape them live, and selecting a company highlights its footprint across
+the map. Add a product by appending an object; no other file needs to change.
 
 ## Keeping it current
 
-1. **Edit the data.** Update `version` / `status` / `blurb`, bump `lastVerified`, add or remove products.
+1. **Edit the data.** Update `version` / `status` / `pricing` / `blurb`, bump `lastVerified`, add or remove products.
 2. **Use the refresh prompt.** [`REFRESH.md`](REFRESH.md) contains a ready-to-run prompt for a
    [Claude Code](https://www.anthropic.com/claude-code) session that web-searches every entry,
    updates the data, and opens a pull request with the diff.
@@ -94,9 +96,8 @@ The site is static and lives at the repository root, so it deploys as-is.
 ```
 frontier_ai/
 ├── index.html                # shell; loads the data then app.js
-├── style.css                 # self-contained design tokens, light + dark
-├── app.js                    # renders the three views, status, theme, and filters
-├── graph.js                  # the force-directed graph view
+├── style.css                 # self-contained design tokens + embedded fonts, light + dark
+├── app.js                    # renders the landscape map, filters, popover, and footprint
 ├── data/
 │   └── ecosystem.js          # the single source of truth (edit this)
 ├── REFRESH.md                # ready-to-run prompt to update the data and open a PR
