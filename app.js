@@ -45,7 +45,7 @@
   var STALE_DAYS = 90;
   var TODAY = new Date();
 
-  var state = { cats: new Set(), region: "all", q: "", view: "categories", openOrgs: new Set() };
+  var state = { cats: new Set(), region: "all", q: "", view: "categories", openOrgs: new Set(), openCats: new Set() };
 
   /* ---- helpers ---------------------------------------------------------- */
   function daysSince(iso) { var d = new Date(iso + "T00:00:00"); return isNaN(d) ? 0 : Math.floor((TODAY - d) / 86400000); }
@@ -140,6 +140,20 @@
   }
   viewSeg.addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) setView(b.getAttribute("data-view")); });
 
+  /* ---- expand / collapse all -------------------------------------------- */
+  var foldAll = document.getElementById("foldAll");
+  var CAT_KEYS = CATEGORIES.map(function (c) { return c.key; });
+  function updateFoldAll() {
+    foldAll.hidden = state.view === "graph";
+    var open = state.view === "companies" ? state.openOrgs.size > 0 : state.openCats.size > 0;
+    foldAll.textContent = open ? "Collapse all" : "Expand all";
+  }
+  foldAll.addEventListener("click", function () {
+    if (state.view === "companies") state.openOrgs = new Set(state.openOrgs.size ? [] : ORG_NAMES);
+    else state.openCats = new Set(state.openCats.size ? [] : CAT_KEYS);
+    render();
+  });
+
   /* ---- companies: expand / collapse ------------------------------------- */
   companiesEl.addEventListener("click", function (ev) {
     var head = ev.target.closest(".company-head"); if (!head) return;
@@ -149,21 +163,30 @@
     head.setAttribute("aria-expanded", String(state.openOrgs.has(org)));
   });
 
+  /* ---- categories: fold / unfold ---------------------------------------- */
+  grid.addEventListener("click", function (ev) {
+    var head = ev.target.closest(".cat-head"); if (!head) return;
+    var card = head.parentNode, key = card.getAttribute("data-cat");
+    if (state.openCats.has(key)) { state.openCats.delete(key); card.classList.add("collapsed"); }
+    else { state.openCats.add(key); card.classList.remove("collapsed"); }
+    head.setAttribute("aria-expanded", String(state.openCats.has(key)));
+    updateFoldAll();
+  });
+
   /* ---- expose for graph ------------------------------------------------- */
   window.Frontier = { data: data, categories: CATEGORIES, isActive: isActive, onFilter: null };
 
-  /* ---- entry (category view) -------------------------------------------- */
+  /* ---- entry (category view, compact single row) ------------------------ */
+  var CHEVRON_CAT = '<svg class="cat-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
   function entryHTML(p) {
     var stale = isStale(p);
-    var sub = esc(p.org) + (p.version ? ' <span class="v">' + esc(p.version) + "</span>" : "");
-    var foot = '<span class="entry-region">' + esc(REGION[p.region] || p.region) + "</span><span class=\"entry-access\">" + esc(p.access) + "</span>";
-    foot += stale
-      ? '<span class="stale-dot" title="Last verified ' + daysSince(p.lastVerified) + ' days ago, may be out of date">' + esc(p.lastVerified) + "</span>"
-      : '<span class="entry-date">' + esc(p.lastVerified) + "</span>";
     return '<a class="entry' + (stale ? " is-stale" : "") + '" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(p.blurb) + '">' +
-      '<span class="entry-top"><span class="entry-name">' + esc(p.name) + "</span>" + badge(p.status) + '<span class="entry-arrow" aria-hidden="true">↗</span></span>' +
-      '<span class="entry-sub">' + sub + "</span>" +
-      '<span class="entry-foot">' + foot + "</span></a>";
+      '<span class="entry-name">' + esc(p.name) + "</span>" + badge(p.status) +
+      '<span class="entry-meta">' +
+        (stale ? '<span class="entry-staledot" title="Last verified ' + daysSince(p.lastVerified) + ' days ago"></span>' : "") +
+        '<span class="entry-org">' + esc(p.org) + "</span>" +
+        (p.version ? '<span class="entry-ver">' + esc(p.version) + "</span>" : "") +
+      '</span><span class="entry-arrow" aria-hidden="true">↗</span></a>';
   }
 
   function renderCategories(animate) {
@@ -173,10 +196,11 @@
       var items = data.filter(function (p) { return p.category === c.key && matchesRegionSearch(p); });
       if (!items.length) return;
       shown++;
-      html += '<section class="cat-card" data-cat="' + c.key + '" style="--d:' + (shown * 40) + 'ms">' +
-        '<div class="cat-head"><span class="cat-icon" aria-hidden="true">' + iconFor(c.key) + "</span>" +
+      var open = state.openCats.has(c.key);
+      html += '<section class="cat-card' + (open ? "" : " collapsed") + '" data-cat="' + c.key + '" style="--d:' + (shown * 30) + 'ms">' +
+        '<button type="button" class="cat-head" aria-expanded="' + open + '"><span class="cat-icon" aria-hidden="true">' + iconFor(c.key) + "</span>" +
         '<div class="cat-title"><div class="name">' + c.label + '</div><div class="sub">' + esc(c.sub) + "</div></div>" +
-        '<span class="cat-count">' + items.length + "</span></div>" +
+        '<span class="cat-count">' + items.length + "</span>" + CHEVRON_CAT + "</button>" +
         '<div class="entries">' + items.map(entryHTML).join("") + "</div></section>";
     });
     grid.className = "grid" + (animate ? " animate" : "");
@@ -246,6 +270,7 @@
     else if (state.view === "companies") renderCompanies(first);
     if (first) { first = false; setTimeout(function () { grid.classList.remove("animate"); companiesEl.classList.remove("animate"); }, 800); }
 
+    updateFoldAll();
     if (window.Frontier && typeof window.Frontier.onFilter === "function") window.Frontier.onFilter();
   }
 
