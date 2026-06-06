@@ -65,7 +65,6 @@
 
         <span class="spacer"></span>
 
-        <button type="button" class="reset fold-all" id="foldAll">Expand all</button>
         <span class="showing" id="showing" aria-live="polite"></span>
         <button type="button" class="reset" id="reset">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
@@ -93,6 +92,16 @@
       <div class="graph-tooltip" id="graphTooltip" hidden></div>
       <div class="graph-panel" id="graphPanel" hidden></div>
     </section>
+
+    <!-- Detail drawer (master-detail) -->
+    <div class="drawer-overlay" id="drawerOverlay" hidden></div>
+    <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Product details" hidden>
+      <header class="drawer-head">
+        <div id="drawerHead"></div>
+        <button type="button" class="drawer-close" id="drawerClose" aria-label="Close details">&#10005;</button>
+      </header>
+      <div class="drawer-body" id="drawerBody"></div>
+    </aside>
 
     <!-- Footer -->
     <footer class="foot">
